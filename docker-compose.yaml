@@ -42,9 +42,9 @@ services:
           | xargs -I{} basename {} \
           | paste -sd ',' -)
         if [ -n "$ADDONS" ]; then
-          echo "[startup] Updating addons: $ADDONS"
-          exec /entrypoint.sh odoo --update="$ADDONS" --without-demo=all
+          echo "[startup] Init+update addons: $ADDONS"
+          exec /entrypoint.sh odoo --init="$ADDONS" --update="$ADDONS" --without-demo=all
         else
-          echo "[startup] No custom addons found, starting normally."
+          echo "[startup] No custom addons found."
           exec /entrypoint.sh odoo
         fi
