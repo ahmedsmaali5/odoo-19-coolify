@@ -16,6 +16,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
   odoo:
     image: 'odoo:19'
     container_name: odoo19
@@ -42,9 +43,11 @@ services:
           | xargs -I{} basename {} \
           | paste -sd ',' -)
         if [ -n "$ADDONS" ]; then
-          echo "[startup] Init+update addons: $ADDONS"
-          exec /entrypoint.sh odoo --init="$ADDONS" --update="$ADDONS" --without-demo=all
+          echo "[startup] Found addons: $ADDONS"
+          exec /entrypoint.sh odoo --init="$ADDONS" --update="$ADDONS"
         else
-          echo "[startup] No custom addons found."
           exec /entrypoint.sh odoo
         fi
+
+volumes:
+  odoo-web-data: null
