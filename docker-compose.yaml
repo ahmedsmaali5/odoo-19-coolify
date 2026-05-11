@@ -1,4 +1,23 @@
-odoo:
+services:
+  db:
+    image: 'postgres:17'
+    container_name: odoo19-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo_password
+    volumes:
+      - './postgresql:/var/lib/postgresql/data'
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'pg_isready -U odoo'
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  odoo:
     image: 'odoo:19'
     container_name: odoo19
     user: root
@@ -15,38 +34,22 @@ odoo:
       PASSWORD: odoo_password
     volumes:
       - 'odoo-web-data:/var/lib/odoo'
-      - 'odoo-extra-addons:/mnt/extra-addons'
+      - './custom_addons:/mnt/extra-addons'
+      - './config:/etc/odoo'
     entrypoint: ["/bin/bash", "-c"]
     command:
       - |
-        echo "[startup] Fetching latest custom addons from GitHub..."
-        curl -sL https://github.com/ahmedsmaali5/odoo-19-coolify/archive/refs/heads/main.tar.gz \
-          | tar -xz -C /tmp/
-        rm -rf /mnt/extra-addons/*
-        cp -r /tmp/odoo-19-coolify-main/custom_addons/. /mnt/extra-addons/
-
-        cat > /etc/odoo/odoo.conf <<EOF
-        [options]
-        admin_passwd = admin_master_password
-        db_host = db
-        db_port = 5432
-        db_user = odoo
-        db_password = odoo_password
-        addons_path = /mnt/extra-addons,/usr/lib/python3/dist-packages/odoo/addons
-        proxy_mode = True
-        workers = 2
-        max_cron_threads = 1
-        EOF
-
         ADDONS=$(find /mnt/extra-addons -maxdepth 1 -mindepth 1 -type d \
           -exec test -f '{}/__manifest__.py' \; -print \
           | xargs -I{} basename {} \
           | paste -sd ',' -)
-
         if [ -n "$ADDONS" ]; then
           echo "[startup] Installing/updating addons: $ADDONS"
           exec /entrypoint.sh odoo --init="$ADDONS" --update="$ADDONS"
         else
-          echo "[startup] No custom addons found, starting normally."
+          echo "[startup] No custom addons found."
           exec /entrypoint.sh odoo
         fi
+
+volumes:
+  odoo-web-data: null
