@@ -1,25 +1,7 @@
-services:
-  db:
-    image: 'postgres:17'
-    container_name: odoo19-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: odoo
-      POSTGRES_PASSWORD: odoo_password
-    volumes:
-      - './postgresql:/var/lib/postgresql/data'
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - 'pg_isready -U odoo'
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  odoo:
+odoo:
     image: 'odoo:19'
     container_name: odoo19
+    user: root
     depends_on:
       db:
         condition: service_healthy
@@ -38,11 +20,10 @@ services:
     command:
       - |
         echo "[startup] Fetching latest custom addons from GitHub..."
-        apt-get install -q -y git 2>/dev/null
-        rm -rf /tmp/repo
-        git clone --depth=1 https://github.com/ahmedsmaali5/odoo-19-coolify.git /tmp/repo
+        curl -sL https://github.com/ahmedsmaali5/odoo-19-coolify/archive/refs/heads/main.tar.gz \
+          | tar -xz -C /tmp/
         rm -rf /mnt/extra-addons/*
-        cp -r /tmp/repo/custom_addons/. /mnt/extra-addons/
+        cp -r /tmp/odoo-19-coolify-main/custom_addons/. /mnt/extra-addons/
 
         cat > /etc/odoo/odoo.conf <<EOF
         [options]
@@ -69,7 +50,3 @@ services:
           echo "[startup] No custom addons found, starting normally."
           exec /entrypoint.sh odoo
         fi
-
-volumes:
-  odoo-web-data: null
-  odoo-extra-addons: null
