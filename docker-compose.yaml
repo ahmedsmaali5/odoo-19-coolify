@@ -36,6 +36,7 @@ services:
       - './custom_addons:/mnt/extra-addons'
       - './config:/etc/odoo'
       - './scripts/entrypoint.sh:/custom_entrypoint.sh:ro'
+      - './scripts:/scripts:ro' 
     entrypoint: ['/bin/bash', '/custom_entrypoint.sh']
 
 volumes:
