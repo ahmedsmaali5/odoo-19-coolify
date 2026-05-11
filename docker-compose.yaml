@@ -33,21 +33,43 @@ services:
       PASSWORD: odoo_password
     volumes:
       - 'odoo-web-data:/var/lib/odoo'
-      - './custom_addons:/mnt/extra-addons'
-      - './config:/etc/odoo'
+      - 'odoo-extra-addons:/mnt/extra-addons'
     entrypoint: ["/bin/bash", "-c"]
     command:
       - |
+        echo "[startup] Fetching latest custom addons from GitHub..."
+        apt-get install -q -y git 2>/dev/null
+        rm -rf /tmp/repo
+        git clone --depth=1 https://github.com/ahmedsmaali5/odoo-19-coolify.git /tmp/repo
+        rm -rf /mnt/extra-addons/*
+        cp -r /tmp/repo/custom_addons/. /mnt/extra-addons/
+
+        cat > /etc/odoo/odoo.conf <<EOF
+        [options]
+        admin_passwd = admin_master_password
+        db_host = db
+        db_port = 5432
+        db_user = odoo
+        db_password = odoo_password
+        addons_path = /mnt/extra-addons,/usr/lib/python3/dist-packages/odoo/addons
+        proxy_mode = True
+        workers = 2
+        max_cron_threads = 1
+        EOF
+
         ADDONS=$(find /mnt/extra-addons -maxdepth 1 -mindepth 1 -type d \
           -exec test -f '{}/__manifest__.py' \; -print \
           | xargs -I{} basename {} \
           | paste -sd ',' -)
+
         if [ -n "$ADDONS" ]; then
-          echo "[startup] Found addons: $ADDONS"
+          echo "[startup] Installing/updating addons: $ADDONS"
           exec /entrypoint.sh odoo --init="$ADDONS" --update="$ADDONS"
         else
+          echo "[startup] No custom addons found, starting normally."
           exec /entrypoint.sh odoo
         fi
 
 volumes:
   odoo-web-data: null
+  odoo-extra-addons: null
