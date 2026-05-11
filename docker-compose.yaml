@@ -16,6 +16,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
   odoo:
     image: 'odoo:19'
     container_name: odoo19
@@ -34,6 +35,8 @@ services:
       - 'odoo-web-data:/var/lib/odoo'
       - './custom_addons:/mnt/extra-addons'
       - './config:/etc/odoo'
+      - './scripts/entrypoint.sh:/custom_entrypoint.sh:ro'
+    entrypoint: ['/bin/bash', '/custom_entrypoint.sh']
+
 volumes:
   odoo-web-data: null
-
