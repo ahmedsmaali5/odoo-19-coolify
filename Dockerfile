@@ -6,7 +6,8 @@ COPY ./custom_addons /mnt/extra-addons
 USER root
 COPY requirements.txt /tmp/requirements.txt
 
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+RUN python3 -m pip install --no-cache-dir --break-system-packages -r /tmp/requirements.txt
+
 
 USER odoo
 

@@ -32,6 +32,7 @@ services:
       HOST: db
       USER: odoo
       PASSWORD: odoo_password
+      ADDONS: ""
     volumes:
       - 'odoo-web-data:/var/lib/odoo'
     entrypoint: ["/bin/bash", "-c"]
