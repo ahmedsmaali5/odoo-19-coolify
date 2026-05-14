@@ -20,6 +20,11 @@ services:
   odoo:
     build: .
     container_name: odoo19
+    labels:
+      - "traefik.http.routers.odoo.middlewares=odoo-timeout"
+      - "traefik.http.middlewares.odoo-timeout.forwardauth.trustForwardHeader=true"
+      - "traefik.http.services.odoo.loadbalancer.server.port=8069"
+      - "traefik.http.services.odoo.loadbalancer.responseForwarding.flushInterval=1ms"
     user: root
     depends_on:
       db:
