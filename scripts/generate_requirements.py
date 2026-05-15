@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
-"""
-Scans all custom addons and extracts Python dependencies
-from __manifest__.py files, then writes requirements.txt
-"""
 
 import os
 import ast
-import sys
 
 ADDONS_DIR = os.path.join(os.path.dirname(__file__), '..', 'custom_addons')
 OUTPUT_FILE = os.path.join(os.path.dirname(__file__), '..', 'requirements.txt')
@@ -24,6 +19,11 @@ def extract_python_deps(manifest_path):
 
 
 def main():
+    # Check if custom_addons folder exists and has content
+    if not os.path.exists(ADDONS_DIR) or not os.listdir(ADDONS_DIR):
+        print("custom_addons folder is empty or missing — skipping requirements.txt generation.")
+        return
+
     all_deps = set()
 
     for addon in sorted(os.listdir(ADDONS_DIR)):
