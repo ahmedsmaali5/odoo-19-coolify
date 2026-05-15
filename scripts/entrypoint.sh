@@ -1,19 +1,12 @@
 #!/bin/bash
 set -e
 
-echo "[entrypoint] Scanning for custom addons..."
-
-ADDONS=$(
-  find /mnt/extra-addons -maxdepth 1 -mindepth 1 -type d \
-    -exec test -f "{}/__manifest__.py" \; -print \
-  | xargs -I{} basename {} \
-  | paste -sd ',' -
-)
-
-if [ -n "$ADDONS" ]; then
-  echo "[entrypoint] Installing/updating: $ADDONS"
-  exec /entrypoint.sh odoo --update="$ADDONS" --without-demo=all "$@"
-else
-  echo "[entrypoint] No custom addons found, starting normally."
-  exec /entrypoint.sh odoo "$@"
+# Inject master password from env var into odoo.conf
+if [ -n "$ODOO_MASTER_PASSWORD" ]; then
+    sed -i "s/^admin_passwd.*/admin_passwd = ${ODOO_MASTER_PASSWORD}/" /etc/odoo/odoo.conf
+    # If the line doesn't exist yet, append it
+    grep -q "^admin_passwd" /etc/odoo/odoo.conf || \
+        echo "admin_passwd = ${ODOO_MASTER_PASSWORD}" >> /etc/odoo/odoo.conf
 fi
+
+exec /entrypoint.sh "$@"
